@@ -145,6 +145,13 @@ QLineEdit#srcEdit {
     color: #cfccc4; font: 11px "%NUM%"; padding: 5px 8px; selection-background-color: rgba(232,163,61,90);
 }
 QLineEdit#srcEdit:focus { border-color: #e8a33d; color: #f0ede6; background: rgba(232,163,61,16); }
+QKeySequenceEdit#shotKey {
+    background: rgba(255,255,255,12); border: 1px solid rgba(255,255,255,28); border-radius: 8px;
+}
+QKeySequenceEdit#shotKey QLineEdit {
+    background: transparent; border: none; color: #f0ede6; font: 600 12px "%NUM%";
+    padding: 4px 8px; selection-background-color: rgba(232,163,61,90);
+}
 QToolButton#timeBtn { background: transparent; border: none; border-radius: 5px; }
 QToolButton#timeBtn:hover { background: rgba(255,255,255,16); }
 QFrame#timePopup { background: #23252d; border: 1px solid rgba(255,255,255,30); border-radius: 10px; }
@@ -334,6 +341,13 @@ QLineEdit#srcEdit {
     color: #4a4a50; font: 11px "%NUM%"; padding: 5px 8px; selection-background-color: rgba(0,103,192,60);
 }
 QLineEdit#srcEdit:focus { border-color: #0067c0; color: #1b1b1f; background: rgba(0,103,192,10); }
+QKeySequenceEdit#shotKey {
+    background: #ffffff; border: 1px solid rgba(0,0,0,26); border-radius: 8px;
+}
+QKeySequenceEdit#shotKey QLineEdit {
+    background: transparent; border: none; color: #1b1b1f; font: 600 12px "%NUM%";
+    padding: 4px 8px; selection-background-color: rgba(0,103,192,60);
+}
 QToolButton#timeBtn { background: transparent; border: none; border-radius: 5px; }
 QToolButton#timeBtn:hover { background: rgba(0,0,0,12); }
 QFrame#timePopup { background: #ffffff; border: 1px solid rgba(0,0,0,30); border-radius: 10px; }

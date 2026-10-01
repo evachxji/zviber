@@ -21,6 +21,7 @@ import app as ui
 import boxes as bx
 import calendar_data as cd
 import installer
+import screenshot as shotmod
 import sysutil
 from themes import THEME_ORDER
 
@@ -215,6 +216,7 @@ def main():
         server.close()
         if boxmgr:
             boxmgr.shutdown()
+        hotkey.shutdown()
     qapp.aboutToQuit.connect(_quit_cleanup)
 
     def on_tray(reason):
@@ -237,6 +239,10 @@ def main():
 
     tray.activated.connect(on_tray)
     tray.show()
+
+    # 截图全局热键（配置为空 = 不启用）；设置窗修改后走 hotkey.apply 即时重注册
+    hotkey = shotmod.HotkeyManager(qapp, lambda: shotmod.start_session(cfg))
+    hotkey.apply(cfg.data.get('shot_hotkey'))
 
     # 节假日数据：设置窗「联网更新」与导入窗里各源的「下载并导入」都走同一条后台通道
     def fetch_holidays(on_finish=None):
@@ -263,7 +269,7 @@ def main():
             return
         dlg = ui.SettingsDialog(panel, fetch_holidays,
                                 lambda: _import_holidays(tray, hstore, panel, download_source),
-                                boxmgr)
+                                boxmgr, hotkey.apply)
         settings_dlg[:] = [dlg]
         dlg.show()
 

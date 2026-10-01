@@ -11,12 +11,12 @@ from datetime import date, datetime, timedelta
 from PyQt5.QtCore import (Qt, QTimer, QSize, QPoint, QPointF, QRectF, QDate, QTime,
                           pyqtSignal, QEvent, QPropertyAnimation, QVariantAnimation, QEasingCurve)
 from PyQt5.QtGui import (QFont, QFontDatabase, QPainter, QColor, QPixmap, QIcon, QPainterPath,
-                         QRegion, QPen, QLinearGradient, QCursor)
+                         QRegion, QPen, QLinearGradient, QCursor, QKeySequence)
 from PyQt5.QtWidgets import (QWidget, QFrame, QLabel, QToolButton, QVBoxLayout, QHBoxLayout,
                              QGridLayout, QStackedLayout, QListWidget,
                              QListWidgetItem, QLineEdit, QMenu, QApplication, QDialog,
                              QFormLayout, QCheckBox, QRadioButton, QPushButton, QCalendarWidget,
-                             QLayout)
+                             QLayout, QKeySequenceEdit)
 
 import calendar_data as cd
 import sysutil
@@ -183,7 +183,7 @@ class Config(object):
     def __init__(self, path):
         self.path = path
         self.data = {'theme': THEME_ORDER[0], 'dual': False, 'tab': 0, 'pos': None,
-                     'off_noon': '12:00-13:00', 'off_evening': '18:00'}
+                     'off_noon': '12:00-13:00', 'off_evening': '18:00', 'shot_hotkey': ''}
         self.load()
 
     def load(self):
@@ -1660,7 +1660,7 @@ class SettingsDialog(QDialog):
     """齿轮按钮弹出的无边框设置窗口，样式跟随当前主题（themes.py #settingsPanel 区段）。
     on_fetch/on_import 为节假日数据回调（由入口提供，以便复用托盘通知）。
     改动即时生效并写入 config.json。"""
-    def __init__(self, panel, on_fetch, on_import, boxmgr=None):
+    def __init__(self, panel, on_fetch, on_import, boxmgr=None, on_hotkey=None):
         super(SettingsDialog, self).__init__(panel)
         self.setObjectName('settingsDlg')
         self.setWindowTitle('设置')
@@ -1669,6 +1669,8 @@ class SettingsDialog(QDialog):
         self.setWindowModality(Qt.NonModal)
         self._drag = None
         cfg = panel.cfg
+        self._cfg = cfg
+        self._on_hotkey = on_hotkey
 
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
@@ -1724,6 +1726,26 @@ class SettingsDialog(QDialog):
         dual.setChecked(panel._dual)
         dual.toggled.connect(panel.set_dual)
         form.addRow(row_label('双栏'), dual)
+
+        # 截图快捷键（留空 = 不启用）；on_hotkey 回调返回错误文案或 None
+        key_row = QHBoxLayout()
+        key_row.setSpacing(sc(8))
+        self.key_edit = QKeySequenceEdit(QKeySequence(cfg.data.get('shot_hotkey') or ''))
+        self.key_edit.setObjectName('shotKey')
+        self.key_edit.setFixedSize(sc(180), sc(30))
+        self.key_edit.setToolTip('按下组合键录入；留空 = 不启用截图热键')
+        self.key_edit.editingFinished.connect(self._commit_hotkey)
+        key_row.addWidget(self.key_edit)
+        clr = QPushButton('清空')
+        clr.setObjectName('setBtn')
+        clr.setFixedHeight(sc(30))
+        clr.clicked.connect(self._clear_hotkey)
+        key_row.addWidget(clr)
+        self.key_warn = QLabel('')
+        self.key_warn.setStyleSheet('color: #e05252;')
+        key_row.addWidget(self.key_warn)
+        key_row.addStretch(1)
+        form.addRow(row_label('截图'), key_row)
 
         # 下班倒计时（自由文本输入 + 时钟弹层）
         # 用 QLineEdit 而非 QTimeEdit：QTimeEdit 是按时/分分段校验的，全选后直接打字会被
@@ -1867,6 +1889,17 @@ class SettingsDialog(QDialog):
         g = self.frameGeometry()
         g.moveCenter(ag.center())
         self.move(g.topLeft())
+
+    def _commit_hotkey(self):
+        """录入完成即落盘并即时重注册；注册失败（被占用/不识别）在右侧红字提示。"""
+        seq = self.key_edit.keySequence().toString(QKeySequence.PortableText)
+        self._cfg.set('shot_hotkey', seq)
+        if self._on_hotkey:
+            self.key_warn.setText(self._on_hotkey(seq) or '')
+
+    def _clear_hotkey(self):
+        self.key_edit.clear()
+        self._commit_hotkey()
 
     def _fetch_clicked(self):
         """联网更新：点击即 loading + 禁用，后台抓取结束后恢复（无论成败，结果看托盘气泡）。"""
